@@ -19,7 +19,7 @@ void down_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 void select_click_handler(ClickRecognizerRef recognzier, void *context) {
-  
+  text_layer_set_text(text_layer, "Emergency triggered.\n You have %S seconds to cancel. Press up button to cancel");
 }
 
 void click_config_provider(void *context) {
@@ -33,7 +33,7 @@ void window_load(Window* window) {
   text_layer_set_background_color(text_layer, GColorClear);
   text_layer_set_text_color(text_layer, GColorBlack);
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
-  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
+  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS));
   text_layer_set_text(text_layer, "Press the select button to trigger emergency");
   layer_add_child(window_get_root_layer(window), (Layer*) text_layer);
 
