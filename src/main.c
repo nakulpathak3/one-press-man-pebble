@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdio.h>
 
+AppTimer *timer;
 Window *window;
 TextLayer *text_layer;
 
@@ -41,15 +42,23 @@ void window_load(Window* window) {
 void down_click_handler(ClickRecognizerRef recognizer, void *context) {
   if (triggered == true) {
     text_layer_set_text(text_layer, "Emergency message cancelled.");
+    app_timer_cancel(timer);
     triggered = false;
   }
 }
 
-void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  triggered = true;
-  text_layer_set_text(text_layer, "Emergency message will be sent in 15 seconds. Press down to cancel.");
-  psleep(15000);
+void timer_callback(void *data) {
   send(BUTTON_ID_SELECT, 0);
+  text_layer_set_text(text_layer, "Emergency message sent.");
+  triggered = false;
+}
+
+void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+  if (triggered == false) {
+    triggered = true;
+    text_layer_set_text(text_layer, "Emergency message will be sent in 10 seconds. Press down to cancel.");
+    timer = app_timer_register(10000, (AppTimerCallback) timer_callback, NULL);
+  }
 }
 
 void click_config_provider(void *context) {
