@@ -6,6 +6,27 @@ Window *window;
 TextLayer *text_layer;
 
 char buffer[1024];
+bool triggered = false;
+
+
+void send(int key, int value) {
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+
+  dict_write_int(iter, key, &value, sizeof(int), true);
+
+  app_message_outbox_send();
+}
+
+void outbox_sent_handler(DictionaryIterator *iter, void *context) {
+  text_layer_set_text(text_layer, "hopefully you will survive bye");
+}
+
+void outbox_failed_handler(DictionaryIterator *iter, AppMessageResult reason, void *context) {
+  text_layer_set_text(text_layer, "Send failed!");
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Fail reason: %d", (int)reason);
+}
+
 
 void window_load(Window* window) {
   text_layer = text_layer_create(GRect(0, 53, 132, 168));
@@ -17,18 +38,18 @@ void window_load(Window* window) {
   layer_add_child(window_get_root_layer(window), (Layer*) text_layer);
 }
 
-void tick_handler(int t, TimeUnits units_changed) {
-  strftime(buffer, sizeof("00"), "%S", tick_time);
-  text_layer_set_text(text_layer, buffer);
-}
-
 void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  
+  if (triggered == true) {
+    text_layer_set_text(text_layer, "Emergency message cancelled.");
+    triggered = false;
+  }
 }
 
 void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Emergency triggered");
-  tick_timer_service_subscribe(SECOND_UNIT, (TickHandler) tick_handler);
+  triggered = true;
+  text_layer_set_text(text_layer, "Emergency message will be sent in 15 seconds. Press down to cancel.");
+  psleep(15000);
+  send(BUTTON_ID_SELECT, 0);
 }
 
 void click_config_provider(void *context) {
@@ -48,6 +69,9 @@ void init() {
   });
   window_set_click_config_provider(window, click_config_provider);
   window_stack_push(window, true);
+  app_message_register_outbox_sent(outbox_sent_handler);
+  app_message_register_outbox_failed(outbox_failed_handler);
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
   
 }
 
